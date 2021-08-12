@@ -1,44 +1,51 @@
-
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 
-public class Decode {
-	public static void decompress (File file, HashMap<Character, String> encode, int bitLength) throws Exception{
-		Scanner scan = new Scanner(System.in);
-        byte[] contents = Files.readAllBytes(file.toPath());
-        char check;
-        String checkString = "";
-        String finalString = "";
-        
-        String dec = binaryToText(contents);
-        
-        for (int i = 0; i < bitLength;i++){
-            check = dec.charAt(i);
-            checkString = checkString + Character.toString(check);
-            if (encode.containsValue(checkString)){
-                finalString = finalString + getKeyByValue(checkString,encode);
-                checkString="";
-            }
-        }
-        
-        System.out.print("Enter file path to store decompressed file : ");
-		String decompress_path = scan.nextLine();
+class Decode {
+	public static void decompress () throws Exception{
 		
-		FileOutputStream fos = new FileOutputStream(decompress_path);
-		byte b[]=finalString.getBytes();
-        fos.write(b);
-        fos.close();
-        
-        //mapfile(encode,decompress);
+		try (Scanner scan = new Scanner(System.in)) {
+			System.out.print("Enter file path to decompressed file : ");
+			String path = scan.nextLine();
+			File file = new File(path);
+			System.out.print("Enter file path to map file : ");
+			String mapfile = scan.nextLine();
+			HashMap<String, String> encode = HashMapFromTextFile(mapfile);
+			
+			byte[] contents = Files.readAllBytes(file.toPath());
+			char check;
+			String checkString = "";
+			String finalString = "";
+			
+			String dec = binaryToText(contents);
+
+			for (int i = 0; i < dec.length();i++){
+			    check = dec.charAt(i);
+			    checkString = checkString + Character.toString(check);
+			    if (encode.containsValue(checkString)){
+			    	String curr = String.valueOf(getKeyByValue(checkString,encode));
+			    	if(curr.equals("\\n")) {
+			    		finalString = finalString+"\n";
+			    	}else if(curr.equals("\\r")) {
+			    		finalString = finalString+"\r";
+			    	}else {
+			    		finalString = finalString + curr;
+			    	}
+			        checkString="";
+			    }
+			}
+			
+			
+			System.out.print("Enter file path to store decompressed file : ");
+			String decompress_path = scan.nextLine();
+			
+			FileOutputStream fos = new FileOutputStream(decompress_path);
+			byte b[]=finalString.getBytes();
+			fos.write(b);
+			fos.close();
+			System.out.println("Decompressed File!");
+		}
     }
 	
 	public static String binaryToText(byte[] contents){
@@ -52,28 +59,42 @@ public class Decode {
         return decompressed.toString();
     }
 
-    public static char getKeyByValue(String value,HashMap<Character, String> encode) {
-        for (Map.Entry<Character, String> entry : encode.entrySet()) {
+    public static String getKeyByValue(String value,HashMap<String, String> encode) {
+        for (Map.Entry<String, String> entry : encode.entrySet()) {
             if (Objects.equals(value, entry.getValue())) {
                 return entry.getKey();
             }
         }
-        return '`';
+        return null;
     }
     
-    public static void mapfile(HashMap<Character, String> map,String decompress) throws IOException {
-    	BufferedWriter bf = new BufferedWriter(new FileWriter(decompress+"map.txt"));
-    	  
-        // iterate map entries
-        for (Map.Entry<Character, String> entry : map.entrySet()) {
-
-            // put key and value separated by a colon
-            bf.write(entry.getKey() + ":"+ entry.getValue());
-
-            // new line
-            bf.newLine();
+    public static HashMap<String, String> HashMapFromTextFile(String filePath){
+    	Map<String, String> map = new HashMap<>();
+        BufferedReader br = null;
+        try {
+            File file = new File(filePath);
+            br = new BufferedReader(new FileReader(file));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+            		String[] parts = line.split(":");
+            		map.put(parts[0],parts[1]);
+            }
         }
-
-        bf.flush();
+        
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        finally {
+            if (br != null) {
+                try {
+                    br.close();
+                }
+                catch (Exception e) {
+                };
+            }
+        }
+         
+        return (HashMap<String, String>) map;
     }
+  
 }
