@@ -1,8 +1,7 @@
 
-
 class HuffmanNode {
     int frequency;
-    char c;
+    String c;
     HuffmanNode left;
     HuffmanNode right;
 }
