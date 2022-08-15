@@ -76,8 +76,13 @@ class Decode {
             br = new BufferedReader(new FileReader(file));
             String line = null;
             while ((line = br.readLine()) != null) {
+            	if(line.charAt(0)==':') {
+            		map.put(":",line.substring(2));
+            	}else {
             		String[] parts = line.split(":");
             		map.put(parts[0],parts[1]);
+            	}
+            		
             }
         }
         
